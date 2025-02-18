@@ -11,7 +11,7 @@ void Server::serverSetup()
 	{
 		std::cout << "Enter port number for the server: ";
 		std::cin >> portNumber;
-		if (portNumber == 123)//This is for quick debugging.
+		if (portNumber == 123) //This is for quick server setup with defualt values, allows for quicker debugging.
 		{
 			this->capacity = 5;
 			this->commandChar = '/';
@@ -113,7 +113,7 @@ int Server::init()
 	FD_SET(listeningSocket, &masterSet);
 	FD_ZERO(&readySet);
 
-	Server::serverRun();
+	serverRun();
 	//return success
 	return 0;
 }
@@ -133,11 +133,13 @@ void Server::serverRun()
 				currentS = accept(listeningSocket, NULL, NULL);
 				std::cout << currentS << " connected." << std::endl;
 				FD_SET(currentS, &masterSet);
+				SendWelcomeMessage(currentS, this->commandChar);
 			}
 			else
 			{
-				if (ReadMessage(currentS) == -1)
+				if (ReadMessage(currentS, masterSet, commandChar) == -1)
 				{
+					std::cout << currentS << " disconnected." << std::endl;
 					closesocket(currentS);
 					FD_CLR(currentS, &masterSet);
 				}

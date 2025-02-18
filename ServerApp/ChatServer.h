@@ -15,13 +15,12 @@
 
 class Server
 {
-
 public:
 	SOCKET listeningSocket;
 	SOCKET connectedSocket;
 	fd_set masterSet;
 	fd_set readySet;
-	
+
 	uint16_t inputPortNumber;
 	int capacity;
 	char commandChar;
@@ -31,6 +30,7 @@ public:
 	int init();
 	void serverRun();
 };
+
 
 inline void startup()
 {

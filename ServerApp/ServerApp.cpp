@@ -1,4 +1,5 @@
 
+
 #include <winsock2.h>
 #include <Windows.h>
 #include <iostream>
@@ -8,6 +9,8 @@
 int main()
 {
 	startup();
+	system("start SpaghettiRelayGUI.exe");
+	system("start SpaghettiRelayGUI.exe");
 	Server server;
 	server.serverSetup();
 	server.getServerInfo(std::to_string(server.inputPortNumber));
