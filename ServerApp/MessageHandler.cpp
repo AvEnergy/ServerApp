@@ -18,8 +18,8 @@ int ReadMessage(SOCKET sock, FD_SET masterSet, char commandChar)
 		{	
 			std::string token = buffer;
 			token.erase(0, 1);
-			token.substr(0, token.find(' '));
-			inputCommands(sock, token);
+			std::string keyCommand = token.substr(0, token.find(' '));
+			inputCommands(sock, keyCommand, token);
 		}
 		else
 		{

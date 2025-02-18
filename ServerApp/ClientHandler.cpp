@@ -1,10 +1,37 @@
 #include "ClientHandler.h"
+#include "Logger.h"
 
-void inputCommands(SOCKET sock, std::string buffer)
+void inputCommands(SOCKET sock, std::string buffer, std::string fullBuffer)
 {
-	if (buffer == "help")
+	if (buffer == "help" || buffer ==  "Help")
 	{
 		helpCommand(sock);
+	}
+	else if (buffer == "register" || buffer == "Register")
+	{
+		std::string username, password;
+		splitString(fullBuffer, buffer, username, password);
+		registerCommand(sock, username, password);
+	}
+	else if (buffer == "login" || buffer == "Login")
+	{
+		//loginCommand(sock);
+	}
+	else if (buffer == "send" || buffer == "Send")
+	{
+		//sendCommand(sock);
+	}
+	else if (buffer == "getlist" || buffer == "Getlist")
+	{
+		//getlistCommand(sock);
+	}
+	else if (buffer == "getlogs" || buffer == "Getlogs")
+	{
+		//getlogsCommand(sock);
+	}
+	else if (buffer == "exit" || buffer == "Exit")
+	{
+		//exitCommand(sock);
 	}
 	else
 	{
@@ -14,6 +41,52 @@ void inputCommands(SOCKET sock, std::string buffer)
 
 void helpCommand(SOCKET sock)
 {
-	const char helpMessage[312] = "Commands: help - displays this message. \n register Username Password - registers user to server. \n login Username Password - Logs User in. \n send RecipientUserName MessageText - Sends a private message to user. \n getlist - gets a list of active users. \n getlogs - gets chat history. \n exit - disconnects user.";
-	SendSingleMessage(sock, (char*)helpMessage, 312);
+	const char helpMessage1[] = "Commands: help - displays this message.";
+	const char helpMessage2[] = "register Username Password - registers user to server.";
+	const char helpMessage3[] = "login Username Password - Logs User in.";
+	const char helpMessage4[] = "send RecipientUserName MessageText - Sends a private message to user.";
+	const char helpMessage5[] = "getlist - gets a list of active users.";
+	const char helpMessage6[] = "getlogs - gets chat history.";
+	const char helpMessage7[] = "exit - disconnects user.";
+	
+	SendSingleMessage(sock, (char*)helpMessage1, sizeof(helpMessage1));
+	SendSingleMessage(sock, (char*)helpMessage2, sizeof(helpMessage2));
+	SendSingleMessage(sock, (char*)helpMessage3, sizeof(helpMessage3));
+	SendSingleMessage(sock, (char*)helpMessage4, sizeof(helpMessage4));
+	SendSingleMessage(sock, (char*)helpMessage5, sizeof(helpMessage5));
+	SendSingleMessage(sock, (char*)helpMessage6, sizeof(helpMessage6));
+	SendSingleMessage(sock, (char*)helpMessage7, sizeof(helpMessage7));
+}
+
+void registerCommand(SOCKET sock, std::string username, std::string password)
+{
+	if (RegisterMap.find(username) != RegisterMap.end())
+	{
+		const char message[25] = "Username already exists.";
+		SendSingleMessage(sock, (char*)message, sizeof(message));
+		return;
+	}
+	else if (username == password)
+	{
+		const char message[64] = "Username and password required. EX: /register Username password";
+		SendSingleMessage(sock, (char*)message, sizeof(message));
+		return;
+	}
+	else
+	{
+		RegisterMap[username] = password;
+		const char message[17] = "User registered.";
+		SendSingleMessage(sock, (char*)message, sizeof(message));
+	}
+
+}
+
+void splitString(std::string& str, std::string& first, std::string& second, std::string& third)
+{
+	std::string::size_type pos = str.find(' ');
+	first = str.substr(0, pos);
+	str = str.substr(pos + 1);
+	pos = str.find(' ');
+	second = str.substr(0, pos);
+	third = str.substr(pos + 1);
 }
