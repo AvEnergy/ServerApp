@@ -18,14 +18,23 @@ void Server::serverSetup()
 			this->inputPortNumber = 31337;
 			return;
 		}
-		//Add some verification that port number is valid.
+		if (portNumber < 1024 || portNumber > 65535)
+		{
+			std::cout << "Error: Port number must be between 1024 and 65535." << std::endl;
+			continue;
+		}
 		std::cout << "Port: " << portNumber << std::endl;
 		break;
 	}
 	while (true)
 	{
 		std::cout << "Enter the max capacity for the server: ";
-		std::cin >> chatCapacity;
+		if (!(std::cin >> chatCapacity))
+		{
+			std::cout << "Invalid input. Please enter a valid number." << std::endl;
+			std::cin.clear();
+			continue;
+		}
 		if (chatCapacity > 10 || chatCapacity < 1)
 		{
 			std::cout << "Error: Chat capacity is out of range. (Between 1 - 10)" << std::endl;
@@ -44,6 +53,7 @@ void Server::serverSetup()
 		{
 			std::cout << "Invalid command character. Pick one of the following: / ! @ ~ > $ #" << std::endl;
 			std::cin.clear();
+			continue;
 		}
 		else
 		{
@@ -64,12 +74,20 @@ void Server::serverSetup()
 void Server::getServerInfo(const std::string& port)
 {
 	char hostname[256];
-	gethostname(hostname, sizeof(hostname));
+	if (gethostname(hostname, sizeof(hostname)) != 0)
+	{
+		std::cout << "Error getting hostname." << std::endl;
+		return;
+	}
 	struct addrinfo hints{}, *res;
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
-	getaddrinfo(hostname, port.c_str(), &hints, &res);
+	if (getaddrinfo(hostname, port.c_str(), &hints, &res) != 0)
+	{
+		std::cout << "Error getting address info." << std::endl;
+		return;
+	}
 
 	std::cout <<"Hostname: " << hostname << std::endl;
 	while (res)
@@ -124,12 +142,21 @@ void Server::serverRun()
 	{
 		readySet = masterSet;
 		int readyFD = select(0, &readySet, NULL, NULL, NULL);
+		if (readyFD == SOCKET_ERROR)
+		{
+			std::cerr << "Select function error." << std::endl;
+			break;
+		}
 
 		for (int i = 0; i < readySet.fd_count; i++)
 		{
 			SOCKET currentS = readySet.fd_array[i];
 			if (currentS == listeningSocket)
 			{
+				if (masterSet.fd_count > this->capacity)
+				{
+					continue;
+				}
 				currentS = accept(listeningSocket, NULL, NULL);
 				std::cout << currentS << " connected." << std::endl;
 				FD_SET(currentS, &masterSet);

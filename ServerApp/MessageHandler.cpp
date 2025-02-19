@@ -6,13 +6,20 @@ int ReadMessage(SOCKET sock, FD_SET masterSet, char commandChar)
 	char buffer[255];
 	int byteSiz = 0;
 	int result = recv(sock, (char*)&byteSiz, 1, 0);
-	if (result == -1)
+	if (result == SOCKET_ERROR)
+	{
 		return -1;
+	}
 
 	int total = 0;
 	while (total < byteSiz)
 	{
 		int result = recv(sock, buffer + total, byteSiz - total, 0);
+		if (result == SOCKET_ERROR)
+		{
+			std::cout << "Failed to receive message" << std::endl;
+			return -1;
+		}
 		std::cout <<"From user "<< sock << " : " << buffer << std::endl;
 		if (buffer[0] == commandChar)
 		{	
@@ -23,12 +30,16 @@ int ReadMessage(SOCKET sock, FD_SET masterSet, char commandChar)
 		}
 		else
 		{
-			SendToAllMessage(sock, buffer, masterSet, byteSiz);
+			if (SendToAllMessage(sock, buffer, masterSet, byteSiz) == -1)
+			{
+				std::cout << "Failed to send message to all clients" << std::endl;
+				return -1;
+			}
 		}
 
 		total += result;
 	}
-	
+	return 0;
 }
 
 int SendToAllMessage(SOCKET sock, char* buffer, FD_SET masterSet, int size)
@@ -38,16 +49,35 @@ int SendToAllMessage(SOCKET sock, char* buffer, FD_SET masterSet, int size)
 		SOCKET currentS = masterSet.fd_array[i];
 		if (currentS == sock)
 			continue;
-		send(currentS, (char*)&size, 1, 0);
-		send(currentS, buffer, strlen(buffer) + 1, 0);
+
+		if (send(currentS, (char*)&size, 1, 0) == SOCKET_ERROR)
+		{
+			std::cout << "Failed to send message size to client" << std::endl;
+			return -1;
+		}
+
+		if (send(currentS, buffer, strlen(buffer) + 1, 0) == SOCKET_ERROR)
+		{
+			std::cout << "Failed to send message to client" << std::endl;
+			return -1;
+		}
 	}
 	return 0;
 }
 
 int SendSingleMessage(SOCKET sock, char* buffer, int size)
 {
-	send(sock, (char*)&size, 1, 0);
-	send(sock, buffer, strlen(buffer) + 1, 0);
+	if (send(sock, (char*)&size, 1, 0) == SOCKET_ERROR)
+	{
+		std::cout << "Failed to send message size to client" << std::endl;
+		return -1;
+	}
+
+	if (send(sock, buffer, strlen(buffer) + 1, 0) == SOCKET_ERROR)
+	{
+		std::cout << "Failed to send message to client" << std::endl;
+		return -1;
+	}
 	return 0;
 }
 
@@ -55,11 +85,19 @@ int SendWelcomeMessage(SOCKET sock, char commandChar)
 {
 
 	const char welcome[28] = "Welcome to the chat server!";
-	SendSingleMessage(sock, (char*)welcome, 28);
+	if (SendSingleMessage(sock, (char*)welcome, 28) == -1)
+	{
+		std::cout << "Failed to send welcome message" << std::endl;
+		return -1;
+	}
 
     char commandMessage[21];
     snprintf(commandMessage, sizeof(commandMessage), "Command character: %c", commandChar);
-	SendSingleMessage(sock, commandMessage, 21);
+	if (SendSingleMessage(sock, commandMessage, 21) == -1)
+	{
+		std::cout << "Failed to send command character message" << std::endl;
+		return -1;
+	}
 
 	return 0;
 }
