@@ -15,7 +15,9 @@ void inputCommands(SOCKET sock, std::string buffer, std::string fullBuffer)
 	}
 	else if (buffer == "login" || buffer == "Login")
 	{
-		//loginCommand(sock);
+		std::string username, password;
+		splitString(fullBuffer, buffer, username, password);
+		loginCommand(sock, username, password);
 	}
 	else if (buffer == "send" || buffer == "Send")
 	{
@@ -35,7 +37,9 @@ void inputCommands(SOCKET sock, std::string buffer, std::string fullBuffer)
 	}
 	else
 	{
-		std::cout << "Invalid command" << std::endl;
+		std::cout << sock <<"sent Invalid command" << std::endl;
+		const char message[] = "Invalid Command input";
+		SendSingleMessage(sock, (char*)message, sizeof(message));
 	}
 }
 
@@ -62,20 +66,26 @@ void registerCommand(SOCKET sock, std::string username, std::string password)
 {
 	if (RegisterMap.find(username) != RegisterMap.end())
 	{
-		const char message[25] = "Username already exists.";
+		const char message[] = "Username already exists.";
+		SendSingleMessage(sock, (char*)message, sizeof(message));
+		return;
+	}
+	else if (username == "register" || username == "Register")
+	{
+		const char message[] = "Username and password required. EX: /register Username password";
 		SendSingleMessage(sock, (char*)message, sizeof(message));
 		return;
 	}
 	else if (username == password)
 	{
-		const char message[64] = "Username and password required. EX: /register Username password";
+		const char message[] = "Username and password must be different. EX: /register Username password";
 		SendSingleMessage(sock, (char*)message, sizeof(message));
 		return;
 	}
 	else
 	{
 		RegisterMap[username] = password;
-		const char message[17] = "User registered.";
+		const char message[] = "User registered.";
 		SendSingleMessage(sock, (char*)message, sizeof(message));
 	}
 
@@ -89,4 +99,32 @@ void splitString(std::string& str, std::string& first, std::string& second, std:
 	pos = str.find(' ');
 	second = str.substr(0, pos);
 	third = str.substr(pos + 1);
+}
+
+void loginCommand(SOCKET sock, std::string username, std::string password)
+{
+	//Check if username is in RegisterMap
+	if (RegisterMap.find(username) == RegisterMap.end())
+	{
+		const char message[] = "Username not registered.";
+		std::cout << message << std::endl;
+		SendSingleMessage(sock, (char*)message, sizeof(message));
+		return;
+	}
+	//check if password matches username
+	else if (RegisterMap[username] != password)
+	{
+		const char message[] = "Invalid password.";
+		std::cout << message << std::endl;
+		SendSingleMessage(sock, (char*)message, sizeof(message));
+		return;
+	}
+	else
+	{
+		UserMap[sock] = username;
+		const char message[] = "User logged in.";
+		std::cout << message << std::endl;
+		SendSingleMessage(sock, (char*)message, sizeof(message));
+	}
+
 }

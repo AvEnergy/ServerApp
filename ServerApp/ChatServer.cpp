@@ -167,6 +167,7 @@ void Server::serverRun()
 				if (ReadMessage(currentS, masterSet, commandChar) == -1)
 				{
 					std::cout << currentS << " disconnected." << std::endl;
+					shutdown(currentS, SD_BOTH);
 					closesocket(currentS);
 					FD_CLR(currentS, &masterSet);
 				}

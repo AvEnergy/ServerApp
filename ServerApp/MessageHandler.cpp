@@ -27,6 +27,7 @@ int ReadMessage(SOCKET sock, FD_SET masterSet, char commandChar)
 			token.erase(0, 1);
 			std::string keyCommand = token.substr(0, token.find(' '));
 			inputCommands(sock, keyCommand, token);
+			break;
 		}
 		else
 		{
@@ -92,6 +93,7 @@ int SendWelcomeMessage(SOCKET sock, char commandChar)
 	}
 
     char commandMessage[21];
+	size_t bugcheck = sizeof(commandMessage);
     snprintf(commandMessage, sizeof(commandMessage), "Command character: %c", commandChar);
 	if (SendSingleMessage(sock, commandMessage, 21) == -1)
 	{

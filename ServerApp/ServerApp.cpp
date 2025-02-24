@@ -9,8 +9,8 @@
 int main()
 {
 	startup();
-	//system("start SpaghettiRelayGUI.exe");
-	//system("start SpaghettiRelayGUI.exe");
+	system("start SpaghettiRelayGUI.exe");
+	system("start SpaghettiRelayGUI.exe");
 	Server server;
 	server.serverSetup();
 	server.getServerInfo(std::to_string(server.inputPortNumber));
