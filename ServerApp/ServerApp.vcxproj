@@ -129,6 +129,7 @@
   <ItemGroup>
     <ClCompile Include="ChatServer.cpp" />
     <ClCompile Include="ClientHandler.cpp" />
+    <ClCompile Include="Logger.cpp" />
     <ClCompile Include="MessageHandler.cpp" />
     <ClCompile Include="ServerApp.cpp" />
   </ItemGroup>

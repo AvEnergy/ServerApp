@@ -1,7 +1,7 @@
 #include "ClientHandler.h"
 #include "Logger.h"
 
-void inputCommands(SOCKET sock, std::string buffer, std::string fullBuffer)
+void inputCommands(SOCKET sock, std::string buffer, std::string fullBuffer, FD_SET masterSet)
 {
 	if (buffer == "help" || buffer ==  "Help")
 	{
@@ -21,19 +21,21 @@ void inputCommands(SOCKET sock, std::string buffer, std::string fullBuffer)
 	}
 	else if (buffer == "send" || buffer == "Send")
 	{
-		//sendCommand(sock);
+		std::string username, message;
+		splitString(fullBuffer, buffer, username, message);
+		sendCommand(sock, username, message);
 	}
 	else if (buffer == "getlist" || buffer == "Getlist")
 	{
-		//getlistCommand(sock);
+		getlistCommand(sock);
 	}
 	else if (buffer == "getlogs" || buffer == "Getlogs")
 	{
-		//getlogsCommand(sock);
+		getlogsCommand(sock);
 	}
 	else if (buffer == "exit" || buffer == "Exit")
 	{
-		//exitCommand(sock);
+		exitCommand(sock, masterSet);
 	}
 	else
 	{
@@ -64,6 +66,9 @@ void helpCommand(SOCKET sock)
 
 void registerCommand(SOCKET sock, std::string username, std::string password)
 {
+	if (isUserLoggedin(sock, username))
+		return;
+
 	if (RegisterMap.find(username) != RegisterMap.end())
 	{
 		const char message[] = "Username already exists.";
@@ -103,7 +108,9 @@ void splitString(std::string& str, std::string& first, std::string& second, std:
 
 void loginCommand(SOCKET sock, std::string username, std::string password)
 {
-	//Check if username is in RegisterMap
+	if (isUserLoggedin(sock, username))
+		return;
+
 	if (RegisterMap.find(username) == RegisterMap.end())
 	{
 		const char message[] = "Username not registered.";
@@ -111,7 +118,6 @@ void loginCommand(SOCKET sock, std::string username, std::string password)
 		SendSingleMessage(sock, (char*)message, sizeof(message));
 		return;
 	}
-	//check if password matches username
 	else if (RegisterMap[username] != password)
 	{
 		const char message[] = "Invalid password.";
@@ -126,5 +132,83 @@ void loginCommand(SOCKET sock, std::string username, std::string password)
 		std::cout << message << std::endl;
 		SendSingleMessage(sock, (char*)message, sizeof(message));
 	}
+}
 
+void getlistCommand(SOCKET sock)
+{
+	for (auto it = UserMap.begin(); it != UserMap.end(); ++it)
+	{
+		std::string message = it->second;
+		SendSingleMessage(sock, (char*)message.c_str(), message.size() + 1);
+	}
+}
+
+void sendCommand(SOCKET sock, std::string username, std::string sentMessage)
+{
+	for (auto it = UserMap.begin(); it != UserMap.end(); ++it)
+	{
+		if (it->second == username)
+		{
+			SendSingleMessage(it->first, (char*)sentMessage.c_str(), sentMessage.size() + 1);
+		}
+		else if (it == UserMap.end())
+		{
+			const char message[] = "User not found.";
+			SendSingleMessage(sock, (char*)message, sizeof(message));
+		}
+		else
+		{
+			std::string message = "Sent to user: " + username + ".";
+			SendSingleMessage(sock, (char*)message.c_str(), message.size() + 1);
+		}
+	}
+}
+
+void getlogsCommand(SOCKET sock)
+{
+	std::ifstream chatLog("chatlog.txt");
+	if (chatLog.is_open())
+	{
+		std::string line;
+		while (std::getline(chatLog, line))
+		{
+			SendSingleMessage(sock, (char*)line.c_str(), line.size() + 1);
+		}
+		chatLog.close();
+	}
+	else
+	{
+		const char message[] = "Chat log not found.";
+		SendSingleMessage(sock, (char*)message, sizeof(message));
+	}
+}
+
+void exitCommand(SOCKET sock, FD_SET masterSet)
+{
+	const char message[] = "Goodbye!";
+	SendSingleMessage(sock, (char*)message, sizeof(message));
+	//SendSingleMessage(sock, NULL, NULL);
+}
+
+bool isUserLoggedin(SOCKET sock, std::string username)
+{
+	if (UserMap.find(sock) != UserMap.end())
+	{
+		const char message[] = "You're already logged in. Cannot login twice.";
+		std::cout << message << std::endl;
+		SendSingleMessage(sock, (char*)message, sizeof(message));
+		return true;
+	}
+
+	for (auto it = UserMap.begin(); it != UserMap.end(); ++it)
+	{
+		if (it->second == username)
+		{
+			const char message[] = "User logged in from another client.";
+			std::cout << message << std::endl;
+			SendSingleMessage(sock, (char*)message, sizeof(message));
+			return true;
+		}
+	}
+	return false;
 }

@@ -12,6 +12,7 @@
 #include <cstring>
 #include <stdlib.h>
 #include "MessageHandler.h"
+#include "Logger.h"
 
 class Server
 {

@@ -1,5 +1,6 @@
 #include "ChatServer.h"
 
+
 void Server::serverSetup()
 {
 	std::set<char> validChars = { '/', '!', '@' , '~' , '>' , '$' , '#' };
@@ -144,7 +145,7 @@ void Server::serverRun()
 		int readyFD = select(0, &readySet, NULL, NULL, NULL);
 		if (readyFD == SOCKET_ERROR)
 		{
-			std::cerr << "Select function error." << std::endl;
+			std::cout << "Select function error." << std::endl;
 			break;
 		}
 
@@ -169,6 +170,7 @@ void Server::serverRun()
 					std::cout << currentS << " disconnected." << std::endl;
 					shutdown(currentS, SD_BOTH);
 					closesocket(currentS);
+					UserMap.erase(currentS);
 					FD_CLR(currentS, &masterSet);
 				}
 			}
